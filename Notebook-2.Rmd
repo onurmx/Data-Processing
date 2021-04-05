@@ -1,0 +1,670 @@
+---
+title: "Data Processing in R and Python Project 3"
+author: "Erol Gungor & Onur Caglayan"
+date: "25/01/2021"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library('xml2')
+library(purrr)
+library('psych')
+library(funModeling)
+library(Hmisc)
+library(ggplot2)
+library('ggridges')
+library(lubridate)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(tidyverse)
+library('plotly')
+library('gapminder')
+```
+
+### My Function For Converting XML Files to Dataframe
+```{r message=FALSE, warning=FALSE}
+#In this function, i have used xml2 and purrr libraries.It works quite faster than other R implementations because it avoids looping. map function was extremely helpful, but the most important part is xml_attrs.
+ConvertXmlToDataframe <- function(path){
+data <- read_xml(path)
+level1 <- xml_find_all(data, "//row")
+level2 <- map(level1, xml_attrs)
+level3 <- map_df(level2,~as.list(.))
+return(level3)
+}
+```
+
+### Assigning XML Files to Dataframes for Astronomy
+```{r message=FALSE, warning=FALSE}
+df_astBadges <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/Badges.xml")
+df_astComments <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/Comments.xml")
+df_astPostHistory <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/PostHistory.xml")
+df_astPostLinks <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/PostLinks.xml")
+df_astPosts <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/Posts.xml")
+df_astTags <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/Tags.xml")
+df_astUsers <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/Users.xml")
+df_astVotes <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/1/Votes.xml")
+```
+
+### Arranging Correct Data Types For Dataframes
+```{r message=FALSE, warning=FALSE}
+#data types has been arranged according to its SQL base, as.integer has been used to change the data type to int, as.Date has been used to change data type to date
+df_astBadges$Id <- as.integer(df_astBadges$Id)
+df_astBadges$UserId <- as.integer(df_astBadges$UserId)
+df_astBadges$Class <- as.integer(df_astBadges$Class)
+df_astBadges$Date <- as.Date(parse_date_time(df_astBadges$Date, c('mdy', 'ymd_hms')))
+
+df_astComments$Id <- as.integer(df_astComments$Id)
+df_astComments$UserId <- as.integer(df_astComments$UserId)
+df_astComments$PostId <- as.integer(df_astComments$PostId)
+df_astComments$Score <- as.integer(df_astComments$Score)
+df_astComments$CreationDate <- as.Date(parse_date_time(df_astComments$CreationDate, c('mdy', 'ymd_hms')))
+
+df_astPostHistory$Id <- as.integer(df_astPostHistory$Id)
+df_astPostHistory$PostHistoryTypeId <- as.integer(df_astPostHistory$PostHistoryTypeId)
+df_astPostHistory$PostId <- as.integer(df_astPostHistory$PostId)
+df_astPostHistory$UserId <- as.integer(df_astPostHistory$UserId)
+df_astPostHistory$CreationDate <- as.Date(parse_date_time(df_astPostHistory$CreationDate, c('mdy', 'ymd_hms')))
+
+df_astPostLinks$Id <- as.integer(df_astPostLinks$Id)
+df_astPostLinks$PostId <- as.integer(df_astPostLinks$PostId)
+df_astPostLinks$RelatedPostId <- as.integer(df_astPostLinks$RelatedPostId)
+df_astPostLinks$LinkTypeId <- as.integer(df_astPostLinks$LinkTypeId)
+df_astPostLinks$CreationDate <- as.Date(parse_date_time(df_astPostLinks$CreationDate, c('mdy', 'ymd_hms')))
+
+df_astPosts$Id <- as.integer(df_astPosts$Id)
+df_astPosts$PostTypeId <- as.integer(df_astPosts$PostTypeId)
+df_astPosts$AcceptedAnswerId <- as.integer(df_astPosts$AcceptedAnswerId)
+df_astPosts$Score <- as.integer(df_astPosts$Score)
+df_astPosts$ViewCount <- as.integer(df_astPosts$ViewCount)
+df_astPosts$OwnerUserId <- as.integer(df_astPosts$OwnerUserId)
+df_astPosts$LastEditorUserId <- as.integer(df_astPosts$LastEditorUserId)
+df_astPosts$AnswerCount <- as.integer(df_astPosts$AnswerCount)
+df_astPosts$CommentCount <- as.integer(df_astPosts$CommentCount)
+df_astPosts$FavoriteCount <- as.integer(df_astPosts$FavoriteCount)
+df_astPosts$ParentId <- as.integer(df_astPosts$ParentId)
+df_astPosts$CreationDate <- as.Date(parse_date_time(df_astPosts$CreationDate, c('mdy', 'ymd_hms')))
+df_astPosts$LastEditDate <- as.Date(parse_date_time(df_astPosts$LastEditDate, c('mdy', 'ymd_hms')))
+df_astPosts$LastActivityDate <- as.Date(parse_date_time(df_astPosts$LastActivityDate, c('mdy', 'ymd_hms')))
+df_astPosts$ClosedDate <- as.Date(parse_date_time(df_astPosts$ClosedDate, c('mdy', 'ymd_hms')))
+df_astPosts$CommunityOwnedDate <- as.Date(parse_date_time(df_astPosts$CommunityOwnedDate, c('mdy', 'ymd_hms')))
+
+df_astTags$Id <- as.integer(df_astTags$Id)
+df_astTags$Count <- as.integer(df_astTags$Count)
+df_astTags$ExcerptPostId <- as.integer(df_astTags$ExcerptPostId)
+df_astTags$WikiPostId <- as.integer(df_astTags$WikiPostId)
+
+df_astUsers$Id <- as.integer(df_astUsers$Id)
+df_astUsers$Reputation <- as.integer(df_astUsers$Reputation)
+df_astUsers$Views <- as.integer(df_astUsers$Views)
+df_astUsers$DownVotes <- as.integer(df_astUsers$DownVotes)
+df_astUsers$AccountId <- as.integer(df_astUsers$AccountId)
+df_astUsers$CreationDate <- as.Date(parse_date_time(df_astUsers$CreationDate, c('mdy', 'ymd_hms')))
+df_astUsers$LastAccessDate <- as.Date(parse_date_time(df_astUsers$LastAccessDate, c('mdy', 'ymd_hms')))
+
+df_astVotes$Id <- as.integer(df_astVotes$Id)
+df_astVotes$PostId <- as.integer(df_astVotes$PostId)
+df_astVotes$VoteTypeId <- as.integer(df_astVotes$VoteTypeId)
+df_astVotes$UserId <- as.integer(df_astVotes$UserId)
+df_astVotes$BountyAmount <- as.integer(df_astVotes$BountyAmount)
+df_astVotes$CreationDate <- as.Date(parse_date_time(df_astVotes$CreationDate, c('mdy', 'ymd_hms')))
+
+```
+
+### Assigning XML Files to Dataframes for Biology
+```{r message=FALSE, warning=FALSE}
+df_bioBadges <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/Badges.xml")
+df_bioComments <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/Comments.xml")
+df_bioPostHistory <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/PostHistory.xml")
+df_bioPostLinks <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/PostLinks.xml")
+df_bioPosts <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/Posts.xml")
+df_bioTags <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/Tags.xml")
+df_bioUsers <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/Users.xml")
+df_bioVotes <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/2/Votes.xml")
+```
+
+### Arranging Correct Data Types For Dataframes
+```{r message=FALSE, warning=FALSE}
+#data types has been arranged according to its SQL base, as.integer has been used to change the data type to int, as.Date has been used to change data type to date
+df_bioBadges$Id <- as.integer(df_bioBadges$Id)
+df_bioBadges$UserId <- as.integer(df_bioBadges$UserId)
+df_bioBadges$Class <- as.integer(df_bioBadges$Class)
+df_bioBadges$Date <- as.Date(parse_date_time(df_bioBadges$Date, c('mdy', 'ymd_hms')))
+
+df_bioComments$Id <- as.integer(df_bioComments$Id)
+df_bioComments$UserId <- as.integer(df_bioComments$UserId)
+df_bioComments$PostId <- as.integer(df_bioComments$PostId)
+df_bioComments$Score <- as.integer(df_bioComments$Score)
+df_bioComments$CreationDate <- as.Date(parse_date_time(df_bioComments$CreationDate, c('mdy', 'ymd_hms')))
+
+df_bioPostHistory$Id <- as.integer(df_bioPostHistory$Id)
+df_bioPostHistory$PostHistoryTypeId <- as.integer(df_bioPostHistory$PostHistoryTypeId)
+df_bioPostHistory$PostId <- as.integer(df_bioPostHistory$PostId)
+df_bioPostHistory$UserId <- as.integer(df_bioPostHistory$UserId)
+df_bioPostHistory$CreationDate <- as.Date(parse_date_time(df_bioPostHistory$CreationDate, c('mdy', 'ymd_hms')))
+
+df_bioPostLinks$Id <- as.integer(df_bioPostLinks$Id)
+df_bioPostLinks$PostId <- as.integer(df_bioPostLinks$PostId)
+df_bioPostLinks$RelatedPostId <- as.integer(df_bioPostLinks$RelatedPostId)
+df_bioPostLinks$LinkTypeId <- as.integer(df_bioPostLinks$LinkTypeId)
+df_bioPostLinks$CreationDate <- as.Date(parse_date_time(df_bioPostLinks$CreationDate, c('mdy', 'ymd_hms')))
+
+df_bioPosts$Id <- as.integer(df_bioPosts$Id)
+df_bioPosts$PostTypeId <- as.integer(df_bioPosts$PostTypeId)
+df_bioPosts$AcceptedAnswerId <- as.integer(df_bioPosts$AcceptedAnswerId)
+df_bioPosts$Score <- as.integer(df_bioPosts$Score)
+df_bioPosts$ViewCount <- as.integer(df_bioPosts$ViewCount)
+df_bioPosts$OwnerUserId <- as.integer(df_bioPosts$OwnerUserId)
+df_bioPosts$LastEditorUserId <- as.integer(df_bioPosts$LastEditorUserId)
+df_bioPosts$AnswerCount <- as.integer(df_bioPosts$AnswerCount)
+df_bioPosts$CommentCount <- as.integer(df_bioPosts$CommentCount)
+df_bioPosts$FavoriteCount <- as.integer(df_bioPosts$FavoriteCount)
+df_bioPosts$ParentId <- as.integer(df_bioPosts$ParentId)
+df_bioPosts$CreationDate <- as.Date(parse_date_time(df_bioPosts$CreationDate, c('mdy', 'ymd_hms')))
+df_bioPosts$LastEditDate <- as.Date(parse_date_time(df_bioPosts$LastEditDate, c('mdy', 'ymd_hms')))
+df_bioPosts$LastActivityDate <- as.Date(parse_date_time(df_bioPosts$LastActivityDate, c('mdy', 'ymd_hms')))
+df_bioPosts$ClosedDate <- as.Date(parse_date_time(df_bioPosts$ClosedDate, c('mdy', 'ymd_hms')))
+df_bioPosts$CommunityOwnedDate <- as.Date(parse_date_time(df_bioPosts$CommunityOwnedDate, c('mdy', 'ymd_hms')))
+
+df_bioTags$Id <- as.integer(df_bioTags$Id)
+df_bioTags$Count <- as.integer(df_bioTags$Count)
+df_bioTags$ExcerptPostId <- as.integer(df_bioTags$ExcerptPostId)
+df_bioTags$WikiPostId <- as.integer(df_bioTags$WikiPostId)
+
+df_bioUsers$Id <- as.integer(df_bioUsers$Id)
+df_bioUsers$Reputation <- as.integer(df_bioUsers$Reputation)
+df_bioUsers$Views <- as.integer(df_bioUsers$Views)
+df_bioUsers$DownVotes <- as.integer(df_bioUsers$DownVotes)
+df_bioUsers$AccountId <- as.integer(df_bioUsers$AccountId)
+df_bioUsers$CreationDate <- as.Date(parse_date_time(df_bioUsers$CreationDate, c('mdy', 'ymd_hms')))
+df_bioUsers$LastAccessDate <- as.Date(parse_date_time(df_bioUsers$LastAccessDate, c('mdy', 'ymd_hms')))
+
+df_bioVotes$Id <- as.integer(df_bioVotes$Id)
+df_bioVotes$PostId <- as.integer(df_bioVotes$PostId)
+df_bioVotes$VoteTypeId <- as.integer(df_bioVotes$VoteTypeId)
+df_bioVotes$UserId <- as.integer(df_bioVotes$UserId)
+df_bioVotes$BountyAmount <- as.integer(df_bioVotes$BountyAmount)
+df_bioVotes$CreationDate <- as.Date(parse_date_time(df_bioVotes$CreationDate, c('mdy', 'ymd_hms')))
+```
+
+### Assigning XML Files to Dataframes for Gaming
+```{r message=FALSE, warning=FALSE}
+df_gamBadges <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/Badges.xml")
+df_gamComments <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/Comments.xml")
+df_gamPostHistory <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/PostHistory.xml")
+df_gamPostLinks <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/PostLinks.xml")
+df_gamPosts <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/Posts.xml")
+df_gamTags <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/Tags.xml")
+df_gamUsers <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/Users.xml")
+df_gamVotes <- ConvertXmlToDataframe("/Users/Asus/Desktop/dprp2/3/Votes.xml")
+```
+
+### Arranging Correct Data Types For Dataframes
+```{r message=FALSE, warning=FALSE}
+#data types has been arranged according to its SQL base, as.integer has been used to change the data type to int, as.Date has been used to change data type to date
+df_gamBadges$Id <- as.integer(df_gamBadges$Id)
+df_gamBadges$UserId <- as.integer(df_gamBadges$UserId)
+df_gamBadges$Class <- as.integer(df_gamBadges$Class)
+df_gamBadges$Date <- as.Date(parse_date_time(df_gamBadges$Date, c('mdy', 'ymd_hms')))
+
+df_gamComments$Id <- as.integer(df_gamComments$Id)
+df_gamComments$UserId <- as.integer(df_gamComments$UserId)
+df_gamComments$PostId <- as.integer(df_gamComments$PostId)
+df_gamComments$Score <- as.integer(df_gamComments$Score)
+df_gamComments$CreationDate <- as.Date(parse_date_time(df_gamComments$CreationDate, c('mdy', 'ymd_hms')))
+
+df_gamPostHistory$Id <- as.integer(df_gamPostHistory$Id)
+df_gamPostHistory$PostHistoryTypeId <- as.integer(df_gamPostHistory$PostHistoryTypeId)
+df_gamPostHistory$PostId <- as.integer(df_gamPostHistory$PostId)
+df_gamPostHistory$UserId <- as.integer(df_gamPostHistory$UserId)
+df_gamPostHistory$CreationDate <- as.Date(parse_date_time(df_gamPostHistory$CreationDate, c('mdy', 'ymd_hms')))
+
+df_gamPostLinks$Id <- as.integer(df_gamPostLinks$Id)
+df_gamPostLinks$PostId <- as.integer(df_gamPostLinks$PostId)
+df_gamPostLinks$RelatedPostId <- as.integer(df_gamPostLinks$RelatedPostId)
+df_gamPostLinks$LinkTypeId <- as.integer(df_gamPostLinks$LinkTypeId)
+df_gamPostLinks$CreationDate <- as.Date(parse_date_time(df_gamPostLinks$CreationDate, c('mdy', 'ymd_hms')))
+
+df_gamPosts$Id <- as.integer(df_gamPosts$Id)
+df_gamPosts$PostTypeId <- as.integer(df_gamPosts$PostTypeId)
+df_gamPosts$AcceptedAnswerId <- as.integer(df_gamPosts$AcceptedAnswerId)
+df_gamPosts$Score <- as.integer(df_gamPosts$Score)
+df_gamPosts$ViewCount <- as.integer(df_gamPosts$ViewCount)
+df_gamPosts$OwnerUserId <- as.integer(df_gamPosts$OwnerUserId)
+df_gamPosts$LastEditorUserId <- as.integer(df_gamPosts$LastEditorUserId)
+df_gamPosts$AnswerCount <- as.integer(df_gamPosts$AnswerCount)
+df_gamPosts$CommentCount <- as.integer(df_gamPosts$CommentCount)
+df_gamPosts$FavoriteCount <- as.integer(df_gamPosts$FavoriteCount)
+df_gamPosts$ParentId <- as.integer(df_gamPosts$ParentId)
+df_gamPosts$CreationDate <- as.Date(parse_date_time(df_gamPosts$CreationDate, c('mdy', 'ymd_hms')))
+df_gamPosts$LastEditDate <- as.Date(parse_date_time(df_gamPosts$LastEditDate, c('mdy', 'ymd_hms')))
+df_gamPosts$LastActivityDate <- as.Date(parse_date_time(df_gamPosts$LastActivityDate, c('mdy', 'ymd_hms')))
+df_gamPosts$ClosedDate <- as.Date(parse_date_time(df_gamPosts$ClosedDate, c('mdy', 'ymd_hms')))
+df_gamPosts$CommunityOwnedDate <- as.Date(parse_date_time(df_gamPosts$CommunityOwnedDate, c('mdy', 'ymd_hms')))
+
+df_gamTags$Id <- as.integer(df_gamTags$Id)
+df_gamTags$Count <- as.integer(df_gamTags$Count)
+df_gamTags$ExcerptPostId <- as.integer(df_gamTags$ExcerptPostId)
+df_gamTags$WikiPostId <- as.integer(df_gamTags$WikiPostId)
+
+df_gamUsers$Id <- as.integer(df_gamUsers$Id)
+df_gamUsers$Reputation <- as.integer(df_gamUsers$Reputation)
+df_gamUsers$Views <- as.integer(df_gamUsers$Views)
+df_gamUsers$DownVotes <- as.integer(df_gamUsers$DownVotes)
+df_gamUsers$AccountId <- as.integer(df_gamUsers$AccountId)
+df_gamUsers$CreationDate <- as.Date(parse_date_time(df_gamUsers$CreationDate, c('mdy', 'ymd_hms')))
+df_gamUsers$LastAccessDate <- as.Date(parse_date_time(df_gamUsers$LastAccessDate, c('mdy', 'ymd_hms')))
+
+df_gamVotes$Id <- as.integer(df_gamVotes$Id)
+df_gamVotes$PostId <- as.integer(df_gamVotes$PostId)
+df_gamVotes$VoteTypeId <- as.integer(df_gamVotes$VoteTypeId)
+df_gamVotes$UserId <- as.integer(df_gamVotes$UserId)
+df_gamVotes$BountyAmount <- as.integer(df_gamVotes$BountyAmount)
+df_gamVotes$CreationDate <- as.Date(parse_date_time(df_gamVotes$CreationDate, c('mdy', 'ymd_hms')))
+```
+
+### User interest comparison between sites, according to number of comments every year and monthly comparison for each year
+
+```{r warning=FALSE,message=FALSE}
+#We will take a look into user interest in each site, using the number of comments each year
+#Starting with grouping data by CreationDate, and counting it.
+
+df_MonthlyAstronomyComments <- df_astComments %>%
+  mutate(CreationYear = year(CreationDate),CreationMonth = month(CreationDate)) %>%
+  group_by(CreationYear,CreationMonth) %>%
+  summarise(AstronomyMCC = n()) 
+
+df_MonthlyBiologyComments <- df_bioComments %>%
+  mutate(CreationYear = year(CreationDate),CreationMonth = month(CreationDate)) %>%
+  group_by(CreationYear,CreationMonth) %>%
+  summarise(BiologyMCC = n())
+
+df_MonthlyGamingComments <- df_gamComments %>%
+  mutate(CreationYear = year(CreationDate),CreationMonth = month(CreationDate)) %>%
+  group_by(CreationYear,CreationMonth) %>%
+  summarise(GamingMCC = n()) 
+
+#Now we are merging those 3 dataframes we got
+df_MonthlyCommentCount <- merge(df_MonthlyAstronomyComments,df_MonthlyBiologyComments,by = c("CreationYear","CreationMonth"),all = TRUE) %>%
+  merge(df_MonthlyGamingComments,by = c("CreationYear","CreationMonth"),all = TRUE) %>%
+  arrange(CreationYear,CreationMonth)
+
+#We are setting NA values to 0 for the sake of graph. In this case we can assume there are 0 comments if there is no information.
+df_MonthlyCommentCount[is.na(df_MonthlyCommentCount)] <- as.integer(0)
+
+#We are using gather function in here, to assign the forum of each comment, so we can show it on graph.
+df_MCCGraph <- df_MonthlyCommentCount %>%
+  gather("AstronomyMCC","BiologyMCC","GamingMCC",key = "Forums",value = "CommentCount")
+
+#We splitted the graph to 2, for the sake of easy understanding and clearer graph.
+df_MCCGraph1 <- filter(df_MCCGraph,CreationYear < 2015)
+df_MCCGraph2 <- filter(df_MCCGraph,CreationYear >= 2015)
+
+#We assign CreationYear and CreationMonth as factor to use barplot just as we want.
+df_MCCGraph1$CreationYear <- factor(df_MCCGraph1$CreationYear)
+df_MCCGraph1$CreationMonth <- factor(df_MCCGraph1$CreationMonth)
+df_MCCGraph2$CreationYear <- factor(df_MCCGraph2$CreationYear)
+df_MCCGraph2$CreationMonth <- factor(df_MCCGraph2$CreationMonth)
+
+#And plotting, we used ggplot for plotting, in this case we want to see the number of comments in each year in each year.
+YCCInteractive1 <- ggplot(df_MCCGraph1,aes(x = CreationYear, y = CommentCount,fill=Forums,width = .5)) + geom_bar(stat = "identity",position = position_dodge2(width = .5)) +
+scale_fill_manual("Forums", values = c("AstronomyMCC" = "black", "BiologyMCC" = "red", "GamingMCC" = "dark blue"))
+
+YCCInteractive2 <- ggplot(df_MCCGraph2,aes(x = CreationYear, y = CommentCount,fill=Forums,width = .5)) + geom_bar(stat = "identity",position = position_dodge2(width = .5)) +
+scale_fill_manual("Forums", values = c("AstronomyMCC" = "black", "BiologyMCC" = "red", "GamingMCC" = "dark blue")) + xlab("")
+
+#ggplotly function is for making the graph interactive, it looks much better this way.
+ggplotly(YCCInteractive1)
+ggplotly(YCCInteractive2)
+```
+
+```{r}
+
+#Now we wanted to see number of comments' distribution each year through months.
+MonthNaming <- df_MCCGraph
+
+#We are changing month names to characters as Jan,Feb to acquire clearer data.
+MonthNaming$CreationMonth <- as.character(MonthNaming$CreationMonth)
+
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "1"] <- "Jan"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "2"] <- "Feb"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "3"] <- "Mar"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "4"] <- "Apr"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "5"] <- "May"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "6"] <- "Jun"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "7"] <- "Jul"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "8"] <- "Aug"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "9"] <- "Sep"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "10"] <- "Oct"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "11"] <- "Nov"
+MonthNaming$CreationMonth[MonthNaming$CreationMonth == "12"] <- "Dec"
+
+#We are creating dataframes for each year, and we will show its monthly distribution in seperate graphs.
+df_MCCGraph2009 <- filter(MonthNaming,CreationYear == 2009)
+df_MCCGraph2010 <- filter(MonthNaming,CreationYear == 2010)
+df_MCCGraph2011 <- filter(MonthNaming,CreationYear == 2011)
+df_MCCGraph2012 <- filter(MonthNaming,CreationYear == 2012)
+df_MCCGraph2013 <- filter(MonthNaming,CreationYear == 2013)
+df_MCCGraph2014 <- filter(MonthNaming,CreationYear == 2014)
+df_MCCGraph2015 <- filter(MonthNaming,CreationYear == 2015)
+df_MCCGraph2016 <- filter(MonthNaming,CreationYear == 2016)
+df_MCCGraph2017 <- filter(MonthNaming,CreationYear == 2017)
+df_MCCGraph2018 <- filter(MonthNaming,CreationYear == 2018)
+df_MCCGraph2019 <- filter(MonthNaming,CreationYear == 2019)
+df_MCCGraph2020 <- filter(MonthNaming,CreationYear == 2020)
+
+#Now plotting, we used mutate to see months in order.
+MCCInteractive09 <- df_MCCGraph2009 %>%
+  arrange(df_MCCGraph2009) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive10 <- df_MCCGraph2010 %>%
+  arrange(df_MCCGraph2010) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive11 <- df_MCCGraph2011 %>%
+  arrange(df_MCCGraph2011) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive12 <- df_MCCGraph2012 %>%
+  arrange(df_MCCGraph2012) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive13 <- df_MCCGraph2013 %>%
+  arrange(df_MCCGraph2013) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive14 <- df_MCCGraph2014 %>%
+  arrange(df_MCCGraph2014) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive15 <- df_MCCGraph2015 %>%
+  arrange(df_MCCGraph2015) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive16 <- df_MCCGraph2016 %>%
+  arrange(df_MCCGraph2016) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive17 <-df_MCCGraph2017 %>%
+  arrange(df_MCCGraph2017) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive18 <- df_MCCGraph2018 %>%
+  arrange(df_MCCGraph2018) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive19 <-df_MCCGraph2019 %>%
+  arrange(df_MCCGraph2019) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+MCCInteractive20 <- df_MCCGraph2020 %>%
+  arrange(df_MCCGraph2020) %>%
+  mutate(CreationMonth = fct_relevel(CreationMonth,"Jan", "Feb", "Mar", "Apr","May","Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec")) %>%
+  ggplot( aes(x=CreationMonth, y=CommentCount,fill=Forums,width = .5)) +
+    geom_bar(stat = "identity",position = position_dodge2(width = .75)) +
+    xlab("")
+
+#And ggplotly again, to make graphs interactive.
+ggplotly(MCCInteractive09)
+ggplotly(MCCInteractive10)
+ggplotly(MCCInteractive11)
+ggplotly(MCCInteractive12)
+ggplotly(MCCInteractive13)
+ggplotly(MCCInteractive14)
+ggplotly(MCCInteractive15)
+ggplotly(MCCInteractive16)
+ggplotly(MCCInteractive17)
+ggplotly(MCCInteractive18)
+ggplotly(MCCInteractive19)
+ggplotly(MCCInteractive20)
+```
+
+### How many users didn't access to the site in last 2 years(730 days) in each site? Which badge name was the most common amongst those who didn't access to the site?
+```{r message=FALSE, warning=FALSE}
+#In this part, we will tag users according to their last access. If access is less than 730 days, we will tag the user as Active, else Inactive.
+BadgeIdName <- select(df_bioBadges,UserId,Name)
+
+#In first mutate, we want to see how many days have passed since user's last access through this very moment.(Sys.Date()) And in second mutate we tag them as Active or Inactive.
+AstActivity <- df_astUsers %>%
+  mutate(AstLastAccess = Sys.Date() - LastAccessDate) %>%
+  mutate(AstActivationStatus = cut(as.numeric(AstLastAccess),c(1,730,max(as.numeric(AstLastAccess))),c("Active","Inactive")))
+  
+BioActivity <- df_bioUsers %>%
+  mutate(BioLastAccess = Sys.Date() - LastAccessDate) %>%
+  mutate(BioActivationStatus = cut(as.numeric(BioLastAccess),c(1,730,max(as.numeric(BioLastAccess))),c("Active","Inactive")))
+  
+
+GamActivity <- df_gamUsers %>%
+  mutate(GamLastAccess = Sys.Date() - LastAccessDate) %>%
+  mutate(GamActivationStatus = cut(as.numeric(GamLastAccess),c(1,730,max(as.numeric(GamLastAccess))),c("Active","Inactive")))
+  
+```
+
+```{r}
+#Now in here, we are grouping the data by activation status, we calculate its frequency and after that we use percentage to use in graph.
+AstChart <- AstActivity %>%
+  group_by(AstActivationStatus) %>%
+  summarise(StatusFreq = n())
+AstChart$Perc <- round(100 * AstChart$StatusFreq / sum(AstChart$StatusFreq))
+
+#And plotting
+AstActivityInt <- ggplot(AstChart, aes(x = 0, y = StatusFreq, fill = AstActivationStatus)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Perc), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Activation Status in Astronomy', subtitle = 'in percentages') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+
+BioChart <- BioActivity %>%
+  group_by(BioActivationStatus) %>%
+  summarise(StatusFreq = n())
+BioChart$Perc <- round(100 * BioChart$StatusFreq / sum(BioChart$StatusFreq))
+
+
+BioActivityInt <- ggplot(BioChart, aes(x = 0, y = StatusFreq, fill = BioActivationStatus)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Perc), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Activation Status in Biology', subtitle = 'in percentages') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+
+GamChart <- GamActivity %>%
+  group_by(GamActivationStatus) %>%
+  summarise(StatusFreq = n())
+GamChart$Perc <- round(100 * GamChart$StatusFreq / sum(GamChart$StatusFreq))
+
+
+GamActivityInt <- ggplot(GamChart, aes(x = 0, y = StatusFreq, fill = GamActivationStatus)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Perc), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Activation Status in Gaming', subtitle = 'in percentages') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+AstActivityInt
+BioActivityInt
+GamActivityInt
+```
+
+```{r message=FALSE, warning=FALSE}
+#In this part, we want to see what was 10 most popular badges amongst active users in each forum
+
+#Finding the 10 most popular badges and their number of usage.
+AstBadgeCount <- AstActivity %>%
+  filter(AstLastAccess < 730) %>%
+  merge(BadgeIdName,by.x = "Id",by.y = "UserId") %>%
+  rename(BadgeName = Name) %>%
+  group_by(BadgeName) %>%
+  summarise(AstBadgeNameCount = n()) %>%
+  arrange(desc(AstBadgeNameCount)) %>%
+  head(10)
+
+#Percentage calculation amongst those top 10 badges, it will make the graph look more descriptive.
+AstBadgeCount$Perc <- round(100 * AstBadgeCount$AstBadgeNameCount / sum(AstBadgeCount$AstBadgeNameCount))
+
+BioBadgeCount <- BioActivity %>%
+  filter(BioLastAccess < 730) %>%
+  merge(BadgeIdName,by.x = "Id",by.y = "UserId") %>%
+  rename(BadgeName = Name) %>%
+  group_by(BadgeName) %>%
+  summarise(BioBadgeNameCount = n()) %>%
+  arrange(desc(BioBadgeNameCount)) %>%
+  head(10)
+
+BioBadgeCount$Perc <- round(100 * BioBadgeCount$BioBadgeNameCount / sum(BioBadgeCount$BioBadgeNameCount))
+
+
+GamBadgeCount <- GamActivity %>%
+  filter(GamLastAccess < 730) %>%
+  merge(BadgeIdName,by.x = "Id",by.y = "UserId") %>%
+  rename(BadgeName = Name) %>%
+  group_by(BadgeName) %>%
+  summarise(GamBadgeNameCount = n()) %>%
+  arrange(desc(GamBadgeNameCount)) %>%
+  head(10)
+
+GamBadgeCount$Perc <- round(100 * GamBadgeCount$GamBadgeNameCount / sum(GamBadgeCount$GamBadgeNameCount))
+```
+
+```{r}
+#And plotting those data in form of piechart
+AstBadgeCountInt <- ggplot(AstBadgeCount, aes(x = 0, y = AstBadgeNameCount, fill = BadgeName)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Perc), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Top 10 Badge Distribution in Active Astronomy Users', subtitle = 'in percentages') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+BioBadgeCountInt <- ggplot(BioBadgeCount, aes(x = 0, y = BioBadgeNameCount, fill = BadgeName)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Perc), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Top 10 Badge Distribution in Active Biology Users', subtitle = 'in percentages') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+GamBadgeCountInt <- ggplot(GamBadgeCount, aes(x = 0, y = GamBadgeNameCount, fill = BadgeName)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Perc), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Top 10 Badge Distribution in Active Gaming Users', subtitle = 'in percentages') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+AstBadgeCountInt
+BioBadgeCountInt
+GamBadgeCountInt
+```
+
+### ViewCount's of Posts according to its creation year
+```{r message=FALSE, warning=FALSE}
+#In this part we want to see user interest to each site through the number of posts each year.
+AstYearlyView <- df_astPosts %>%
+  mutate(CreationYear = year(CreationDate)) %>%
+  group_by(CreationYear) %>%
+  summarise(AstViewCount = n())
+
+BioYearlyView <- df_bioPosts %>%
+  mutate(CreationYear = year(CreationDate)) %>%
+  group_by(CreationYear) %>%
+  summarise(BioViewCount = n())
+
+GamYearlyView <- df_gamPosts %>%
+  mutate(CreationYear = year(CreationDate)) %>%
+  group_by(CreationYear) %>%
+  summarise(GamViewCount = n())
+
+Prep <- merge(AstYearlyView,BioYearlyView)
+YearlyView <- merge(Prep,GamYearlyView)
+
+YearlyViewChart <- YearlyView %>%
+  gather("AstViewCount","BioViewCount","GamViewCount",key = "Forums",value = "ViewCount")
+  
+```
+
+```{r}
+#And plotting
+YViewCountInt <- ggplot(YearlyViewChart,aes(x = CreationYear, y = ViewCount,fill=Forums,width = .5)) + geom_bar(stat = "identity",position = position_dodge2(width = .75)) + 
+scale_fill_manual("Forums", values = c("AstViewCount" = "black", "BioViewCount" = "red", "GamViewCount" = "dark blue"))
+
+ggplotly(YViewCountInt)
+```
+
+### Number of users who located in Poland in each site
+```{r message=FALSE, warning=FALSE}
+#In this part we want to see users located in Poland, and their distribution to forums in a pie chart.
+AstPLUsers <- df_astUsers %>%
+  filter(grepl("Poland", Location) == TRUE) %>%
+  mutate(Forum = "Astronomy")
+
+BioPLUsers <- df_bioUsers %>%
+  filter(grepl("Poland", Location) == TRUE) %>%
+  mutate(Forum = "Biology")
+
+GamPLUsers <- df_gamUsers %>%
+  filter(grepl("Poland", Location) == TRUE) %>%
+  mutate(Forum = "Gaming")
+
+Prep1 <- merge(AstPLUsers,BioPLUsers,all = TRUE)
+PLUsers <- merge(Prep1,GamPLUsers,all = TRUE)
+
+PLUserCount <- PLUsers %>%
+  group_by(Forum) %>%
+  summarise(Count = n())
+```
+
+```{r}
+#And the plotting
+PLUserChart <- ggplot(PLUserCount, aes(x = 0, y = Count, fill = Forum)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), position = position_stack(vjust = 0.5)) +
+  scale_x_continuous(expand = c(0,0)) +
+  labs(fill = 'Type', x = NULL, y = NULL, title = 'Comparison between users located in Poland') +
+  coord_polar(theta = "y") +
+  theme_minimal()
+
+PLUserChart
+```
+

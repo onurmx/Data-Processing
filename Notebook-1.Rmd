@@ -1,0 +1,820 @@
+---
+title: "DPRPy Assignment No.2"
+author: "Onur Caglayan"
+output: html_document
+---
+
+```{r}
+library(xml2)
+library(purrr)
+library(dplyr)
+library(data.table)
+```
+
+# Converters
+```{r}
+BadgesConverter <- function(xmlFilePath){
+  #Read the XML file.
+  badges_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(badges_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  Badges_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  Badges_df$Id <- as.integer(Badges_df$Id)
+  Badges_df$UserId <- as.integer(Badges_df$UserId)
+  Badges_df$Date <- as.Date(Badges_df$Date)
+  Badges_df$Class <- as.integer(Badges_df$Class)
+  return(Badges_df)
+}
+
+CommentsConverter <- function(xmlFilePath){
+  #Read the XML file.
+  comments_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(comments_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  Comments_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  Comments_df$Id <- as.integer(Comments_df$Id)
+  Comments_df$PostId <- as.integer(Comments_df$PostId)
+  Comments_df$Score <- as.integer(Comments_df$Score)
+  Comments_df$CreationDate <- as.Date(Comments_df$CreationDate)
+  Comments_df$UserId <- as.integer(Comments_df$UserId)
+  return(Comments_df)
+}
+
+PostHistoryConverter <- function(xmlFilePath){
+  #Read the XML file.
+  posthistory_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(posthistory_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  PostHistory_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  PostHistory_df$Id <- as.integer(PostHistory_df$Id)
+  PostHistory_df$PostHistoryTypeId <- as.integer(PostHistory_df$PostHistoryTypeId)
+  PostHistory_df$PostId <- as.integer(PostHistory_df$PostId)
+  PostHistory_df$CreationDate <- as.Date(PostHistory_df$CreationDate)
+  PostHistory_df$UserId <- as.integer(PostHistory_df$UserId)
+  return(PostHistory_df)
+}
+
+PostLinksConverter <- function(xmlFilePath){
+  #Read the XML file.
+  postlinks_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(postlinks_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  PostLinks_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  PostLinks_df$Id <- as.integer(PostLinks_df$Id)
+  PostLinks_df$CreationDate <- as.Date(PostLinks_df$CreationDate)
+  PostLinks_df$PostId <- as.integer(PostLinks_df$PostId)
+  PostLinks_df$RelatedPostId <- as.integer(PostLinks_df$RelatedPostId)
+  PostLinks_df$LinkTypeId <- as.integer(PostLinks_df$LinkTypeId)
+  return(PostLinks_df)
+}
+
+PostsConverter <- function(xmlFilePath){
+  #Read the XML file.
+  posts_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(posts_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  Posts_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  Posts_df$Id <- as.integer(Posts_df$Id)
+  Posts_df$PostTypeId <- as.integer(Posts_df$PostTypeId)
+  Posts_df$AcceptedAnswerId <- as.integer(Posts_df$AcceptedAnswerId)
+  Posts_df$ParentId <- as.integer(Posts_df$ParentId)
+  Posts_df$CreationDate <- as.Date(Posts_df$CreationDate)
+  Posts_df$Score <- as.integer(Posts_df$Score)
+  Posts_df$ViewCount <- as.integer(Posts_df$ViewCount)
+  Posts_df$OwnerUserId <- as.integer(Posts_df$OwnerUserId)
+  Posts_df$LastEditorUserId <- as.integer(Posts_df$LastEditorUserId)
+  Posts_df$LastEditDate <- as.Date(Posts_df$LastEditDate)
+  Posts_df$LastActivityDate <- as.Date(Posts_df$LastActivityDate)
+  Posts_df$AnswerCount <- as.integer(Posts_df$AnswerCount)
+  Posts_df$CommentCount <- as.integer(Posts_df$CommentCount)
+  Posts_df$FavoriteCount <- as.integer(Posts_df$FavoriteCount)
+  Posts_df$ClosedDate <- as.Date(Posts_df$ClosedDate)
+  Posts_df$CommunityOwnedDate <- as.Date(Posts_df$CommunityOwnedDate)
+  return(Posts_df)
+}
+
+TagsConverter <- function(xmlFilePath){
+  #Read the XML file.
+  tags_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(tags_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  Tags_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  Tags_df$Id <- as.integer(Tags_df$Id)
+  Tags_df$Count <- as.integer(Tags_df$Count)
+  Tags_df$ExcerptPostId <- as.integer(Tags_df$ExcerptPostId)
+  Tags_df$WikiPostId <- as.integer(Tags_df$WikiPostId)
+  return(Tags_df)
+}
+
+UsersConverter <- function(xmlFilePath){
+  #Read the XML file.
+  users_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(users_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  Users_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  Users_df$Id <- as.integer(Users_df$Id)
+  Users_df$Reputation <- as.integer(Users_df$Reputation)
+  Users_df$CreationDate <- as.Date(Users_df$CreationDate)
+  Users_df$LastAccessDate <- as.Date(Users_df$LastAccessDate)
+  Users_df$Views <- as.integer(Users_df$Views)
+  Users_df$UpVotes <- as.integer(Users_df$UpVotes)
+  Users_df$DownVotes <- as.integer(Users_df$DownVotes)
+  Users_df$AccountId <- as.integer(Users_df$AccountId)
+  return(Users_df)
+}
+
+VotesConverter <- function(xmlFilePath){
+  #Read the XML file.
+  votes_xml <- read_xml(xmlFilePath, useInternalNode = TRUE)
+  #Navigate Around The Family Tree.
+  data <- xml_children(votes_xml)
+  #Apply "xml_attrs" To Each Element Of A Vector.
+  data_map <- map(data, xml_attrs)
+  #Return data frame.
+  Votes_df <- map_df(data_map,~as.list(.))
+  
+  #Change variables to correct types.
+  Votes_df$Id <- as.integer(Votes_df$Id)
+  Votes_df$PostId <- as.integer(Votes_df$PostId)
+  Votes_df$VoteTypeId <- as.integer(Votes_df$VoteTypeId)
+  Votes_df$UserId <- as.integer(Votes_df$UserId)
+  Votes_df$CreationDate <- as.Date(Votes_df$CreationDate)
+  return(Votes_df)
+}
+```
+
+# Converting "Gamedev" archive
+```{r}
+Gamedev_Badges <- BadgesConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/Badges.xml")
+Gamedev_Comments <- CommentsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/Comments.xml")
+Gamedev_PostHistory <- PostHistoryConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/PostHistory.xml")
+Gamedev_PostLinks <- PostLinksConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/PostLinks.xml")
+Gamedev_Posts <- PostsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/Posts.xml")
+Gamedev_Tags <- TagsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/Tags.xml")
+Gamedev_Users <- UsersConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/Users.xml")
+Gamedev_Votes <- VotesConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Gamedev/Votes.xml")
+```
+
+# Converting "Bitcoin" archive
+```{r}
+Bitcoin_Badges <- BadgesConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/Badges.xml")
+Bitcoin_Comments <- CommentsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/Comments.xml")
+Bitcoin_PostHistory <- PostHistoryConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/PostHistory.xml")
+Bitcoin_PostLinks <- PostLinksConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/PostLinks.xml")
+Bitcoin_Posts <- PostsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/Posts.xml")
+Bitcoin_Tags <- TagsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/Tags.xml")
+Bitcoin_Users <- UsersConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/Users.xml")
+Bitcoin_Votes <- VotesConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Bitcoin/Votes.xml")
+```
+
+# Converting "Ethereum" archive
+```{r}
+Ethereum_Badges <- BadgesConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/Badges.xml")
+Ethereum_Comments <- CommentsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/Comments.xml")
+Ethereum_PostHistory <- PostHistoryConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/PostHistory.xml")
+Ethereum_PostLinks <- PostLinksConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/PostLinks.xml")
+Ethereum_Posts <- PostsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/Posts.xml")
+Ethereum_Tags <- TagsConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/Tags.xml")
+Ethereum_Users <- UsersConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/Users.xml")
+Ethereum_Votes <- VotesConverter("C:/Users/Onur/Desktop/DPRPY/Datas/Ethereum/Votes.xml")
+```
+
+# Description of available Variables (Analysis Part 1)
+## Gamedev
+### Gamedev Badges
+#### Id: Badge ID.
+#### UserId: User ID.
+#### Name: Name of the Badge.
+#### Date: Date of when the achievement was achieved.
+#### Class: 1=Gold, 2=Silver and 3=Bronze.
+#### TagBased: True if badge is for a tag, otherwise it is a named badge.
+```{r}
+str(Gamedev_Badges)
+```
+
+### Gamedev Comments
+#### Id: Id of a specific comment.(It is unqiue for each comment)
+#### PostId: Id of a specific post.(Many comments can be for one post)
+#### Score: Upvote and Downvote for a specific comment.
+#### Text: Text of the comment.
+#### CreationDate: Date of the comment.
+#### UserId: Id of the author of the comment.
+#### ContentLicense: Content License.
+#### UserDisplayName: Display name of the user. UserDisplayName=NA means that the user has not changed their default username.
+```{r}
+str(Gamedev_Comments)
+```
+
+### Gamedev PostHistory
+#### Id: Primary key.
+#### PostHistoryTypeId:
+##### 1=Initial Title - initial title(questions only)
+##### 2=Initial Body - initial post raw body text
+##### 3=Initial Tags - initial list of tags(questions only)
+##### 4=Edit Title - modified title(questions only)
+##### 5=Edit Body - modified post body(raw markdown)
+##### 6=Edit Tags - modified list of tags(questions only)
+##### 7=Rollback Title - reverted title(questions only)
+##### 8=Rollback Body - reverted body(raw markdown)
+##### 9=Rollback Tags - reverted list of tags(questions only)
+##### 10=Post Closed - post voted to be closed
+##### 11=Post Reopened - post voted to be reopened
+##### 12=Post Deleted - post voted to be removed
+##### 13=Post Undeleted - post voted to be restored
+##### 14=Post Locked - post locked by moderator
+##### 15=Post Unlocked - post unlocked by moderator
+##### 16=Community Owned - post now community owned
+##### 17=Post Migrated - post migrated - now replaced by 35/36(away/here)
+##### 18=Question Merged - question merged with deleted question
+##### 19=Question Protected - question was protected by a moderator.
+##### 20=Question Unprotected - question was unprotected by a moderator.
+##### 21=Post Disassociated - OwnerUserId removed from post by admin
+##### 22=Question Unmerged - answers/votes restored to previously merged question
+##### 24=Suggested Edit Applied
+##### 25=Post Tweeted
+##### 31=Comment discussion moved to chat
+##### 33=Post notice added - comment contains foreign key to PostNotices
+##### 34=Post notice removed - comment contains foreign key to PostNotices
+##### 35=Post migrated away - replaces id 17
+##### 36=Post migrated here - replaces id 17
+##### 37=Post merge source
+##### 38=Post merge destination
+##### 50=Bumped by Community User
+##### 52=Question became hot network question(main) / Hot Meta question(meta)
+##### 53=Question removed from hot network/meta questions by a moderator
+#### PostId: Id of the post.
+#### RevisionGUID: At times more than one type of history record can be recorded by a single action. All of these will be grouped using the same RevisionGUID.
+#### CreationDate: Creation of the PostHistory.
+#### UserId: Id of the user.
+#### Text: Text of the Post History.
+#### ContentLicense: Content license.
+#### Comment: Comment of the post history.
+#### UserDisplayName: Display name of the user. UserDisplayName = NA means that the user has not changed their default username.
+```{r}
+str(Gamedev_PostHistory)
+```
+
+### Gamedev PostLinks
+#### Id: Primary key.
+#### CreationDate: When the link was created.
+#### PostId: Id of source post.
+#### RelatedPostId: Id of target/related post.
+#### LinkTypeId: type of link: 1=Linked(PostId contains a link to RelatedPostId), 3=Duplicate(PostId is a duplicate of RelatedPostId).
+```{r}
+str(Gamedev_PostLinks)
+```
+
+### Gamedev Posts
+#### Id: Post Id.
+#### PostTypeId: Type of the post. Meanings of Id's:
+##### 1=Question
+##### 2=Answer
+##### 3=Wiki
+##### 4=TagWikiExcerpt
+##### 5=TagWiki
+##### 6=ModeratorNomination
+##### 7=WikiPlaceholder
+##### 8=PrivilegeWiki.
+#### AcceptedAnswerId: Accepted answer id(with a green tick). Only present if PostTypeId=1.
+#### CreationDate: Creation date of the post.
+#### Score: The score of the post. The number we see between the up and down arrows. It starts at 0. Then other users decide how to rate the post.
+#### ViewCount: Number of views of the post. Only present if PostTypeId=1.
+#### Body: Post content.
+#### OwnerUserId: Id of the user who wrote the post. Only present if user has not been deleted; always -1 for tag wiki entries, for example the community user owns them.
+#### LastEditorDisplayName: Name of the last editor.
+#### LastEditDate: Date of the last edit.
+#### LastActivityDate: Date of the last activity.
+#### Title: Content of the title.
+#### Tags: Post tags. Only present if PostTypeId=1.
+#### AnswerCount: Number of replies to a post/reply.
+#### CommentCount: Number of comments to the post.
+#### FavoriteCount: Number of favorites
+#### ClosedDate: Closing date of the post
+#### CommunityOwnedDate: Present only if post is community wiki'd.
+#### ContentLicense: Content license.
+#### ParentId: The id of the question to which the answer was written. Only present if PostTypeId=2.
+#### LastEditorUserId: User Id of the last editor.
+#### OwnerDisplayName: Name of the post owner.
+```{r}
+str(Gamedev_Posts)
+```
+
+### Gamedev Tags
+#### Id: Primary key.
+#### TagName: Tag name. Just a one-word word used as a tag. For example: "path-finding", "tutorials",...
+#### Count: Number of uses of a given tag in all posts.
+#### ExcerptPostId: Id of Post that holds the excerpt text of the tag.
+#### WikiPostId: Id of Post that holds the wiki text of the tag.
+```{r}
+str(Gamedev_Tags)
+```
+
+### Gamedev Users
+#### Id: Primary key and User Id.
+#### Reputation: When other users vote(UpVote-positive or DownVote-negative) on your posts(Q&A), you generate reputation. The amount of points depends on many factors, but roughly scaled it works like this: sum(UpVote)+sum(downVote)=Reputation
+#### CreationDate: User creation date.
+#### DisplayName: User nickname.
+#### LastAccessDate: When was she/he last logged in.
+#### WebsiteUrl: User's website.
+#### Location: User's place of residence. Usually in the form of City, State.
+#### AboutMe: What the user wrote about himself. Usually a few sentences.
+#### Views: Number of times the profile is viewed.
+#### UpVotes: UpVote moves content "up" to make it visible to more people.
+#### DownVotes: DownVote moves content "down" on the page so fewer people can see it.
+#### AccountId: User's Stack Exchange Network profile ID.
+#### ProfileImageUrl: URL of profile image.
+```{r}
+str(Gamedev_Users)
+```
+
+### Gamedev Votes
+#### Id: Primary key.
+#### PostId: Id of the post.
+#### VoteTypeId: Vote type:
+##### 1=AcceptedByOriginator
+##### 2=UpMod(AKA upvote)
+##### 3=DownMod(AKA downvote)
+##### 4=Offensive
+##### 5=Favorite(AKA bookmark; UserId will also be populated)
+##### 6=Close(effective 2013-06-25: Close votes are only stored in table: PostHistory)
+##### 7=Reopen
+##### 8=BountyStart(UserId and BountyAmount will also be populated)
+##### 9=BountyClose(BountyAmount will also be populated)
+##### 10=Deletion
+##### 11=Undeletion
+##### 12=Spam
+##### 15=ModeratorReview(i.e., a moderator looking at a flagged post)
+##### 16=ApproveEditSuggestion
+#### CreationDate: Date of the vote. Date only-time data is purposefully removed to protect user privacy.
+#### UserId: Present only if VoteTypeId in (5,8); -1 if user is deleted.
+#### BountyAmount: Present only if VoteTypeId in (8,9).
+```{r}
+str(Gamedev_Votes)
+```
+
+## Bitcoin
+### Bitcoin Badges
+#### Id: Badge ID.
+#### UserId: User ID.
+#### Name: Name of the Badge.
+#### Date: Date of when the achievement was achieved.
+#### Class: 1=Gold, 2=Silver and 3=Bronze.
+#### TagBased: True if badge is for a tag, otherwise it is a named badge.
+```{r}
+str(Bitcoin_Badges)
+```
+
+### Bitcoin Comments
+#### Id: Id of a specific comment.(It is unqiue for each comment)
+#### PostId: Id of a specific post.(Many comments can be for one post)
+#### Score: Upvote and Downvote for a specific comment.
+#### Text: Text of the comment.
+#### CreationDate: Date of the comment.
+#### UserId: Id of the author of the comment.
+#### ContentLicense: Content License.
+#### UserDisplayName: Display name of the user. UserDisplayName=NA means that the user has not changed their default username.
+```{r}
+str(Bitcoin_Comments)
+```
+
+### Bitcoin PostHistory
+#### Id: Primary key.
+#### PostHistoryTypeId:
+##### 1=Initial Title - initial title(questions only)
+##### 2=Initial Body - initial post raw body text
+##### 3=Initial Tags - initial list of tags(questions only)
+##### 4=Edit Title - modified title(questions only)
+##### 5=Edit Body - modified post body(raw markdown)
+##### 6=Edit Tags - modified list of tags(questions only)
+##### 7=Rollback Title - reverted title(questions only)
+##### 8=Rollback Body - reverted body(raw markdown)
+##### 9=Rollback Tags - reverted list of tags(questions only)
+##### 10=Post Closed - post voted to be closed
+##### 11=Post Reopened - post voted to be reopened
+##### 12=Post Deleted - post voted to be removed
+##### 13=Post Undeleted - post voted to be restored
+##### 14=Post Locked - post locked by moderator
+##### 15=Post Unlocked - post unlocked by moderator
+##### 16=Community Owned - post now community owned
+##### 17=Post Migrated - post migrated - now replaced by 35/36(away/here)
+##### 18=Question Merged - question merged with deleted question
+##### 19=Question Protected - question was protected by a moderator.
+##### 20=Question Unprotected - question was unprotected by a moderator.
+##### 21=Post Disassociated - OwnerUserId removed from post by admin
+##### 22=Question Unmerged - answers/votes restored to previously merged question
+##### 24=Suggested Edit Applied
+##### 25=Post Tweeted
+##### 31=Comment discussion moved to chat
+##### 33=Post notice added - comment contains foreign key to PostNotices
+##### 34=Post notice removed - comment contains foreign key to PostNotices
+##### 35=Post migrated away - replaces id 17
+##### 36=Post migrated here - replaces id 17
+##### 37=Post merge source
+##### 38=Post merge destination
+##### 50=Bumped by Community User
+##### 52=Question became hot network question(main) / Hot Meta question(meta)
+##### 53=Question removed from hot network/meta questions by a moderator
+#### PostId: Id of the post.
+#### RevisionGUID: At times more than one type of history record can be recorded by a single action. All of these will be grouped using the same RevisionGUID.
+#### CreationDate: Creation of the PostHistory.
+#### UserId: Id of the user.
+#### Text: Text of the Post History.
+#### ContentLicense: Content license.
+#### Comment: Comment of the post history.
+#### UserDisplayName: Display name of the user. UserDisplayName = NA means that the user has not changed their default username.
+```{r}
+str(Bitcoin_PostHistory)
+```
+
+### Bitcoin PostLinks
+#### Id: Primary key.
+#### CreationDate: When the link was created.
+#### PostId: Id of source post.
+#### RelatedPostId: Id of target/related post.
+#### LinkTypeId: type of link: 1=Linked(PostId contains a link to RelatedPostId), 3=Duplicate(PostId is a duplicate of RelatedPostId).
+```{r}
+str(Bitcoin_PostLinks)
+```
+
+### Bitcoin Posts
+#### Id: Post Id.
+#### PostTypeId: Type of the post. Meanings of Id's:
+##### 1=Question
+##### 2=Answer
+##### 3=Wiki
+##### 4=TagWikiExcerpt
+##### 5=TagWiki
+##### 6=ModeratorNomination
+##### 7=WikiPlaceholder
+##### 8=PrivilegeWiki.
+#### AcceptedAnswerId: Accepted answer id(with a green tick). Only present if PostTypeId=1.
+#### CreationDate: Creation date of the post.
+#### Score: The score of the post. The number we see between the up and down arrows. It starts at 0. Then other users decide how to rate the post.
+#### ViewCount: Number of views of the post. Only present if PostTypeId=1.
+#### Body: Post content.
+#### OwnerUserId: Id of the user who wrote the post. Only present if user has not been deleted; always -1 for tag wiki entries, for example the community user owns them.
+#### LastEditorDisplayName: Name of the last editor.
+#### LastEditDate: Date of the last edit.
+#### LastActivityDate: Date of the last activity.
+#### Title: Content of the title.
+#### Tags: Post tags. Only present if PostTypeId=1.
+#### AnswerCount: Number of replies to a post/reply.
+#### CommentCount: Number of comments to the post.
+#### FavoriteCount: Number of favorites
+#### ClosedDate: Closing date of the post
+#### CommunityOwnedDate: Present only if post is community wiki'd.
+#### ContentLicense: Content license.
+#### ParentId: The id of the question to which the answer was written. Only present if PostTypeId=2.
+#### LastEditorUserId: User Id of the last editor.
+#### OwnerDisplayName: Name of the post owner.
+```{r}
+str(Bitcoin_Posts)
+```
+
+### Bitcoin Tags
+#### Id: Primary key.
+#### TagName: Tag name. Just a one-word word used as a tag. For example: "path-finding", "tutorials",...
+#### Count: Number of uses of a given tag in all posts.
+#### ExcerptPostId: Id of Post that holds the excerpt text of the tag.
+#### WikiPostId: Id of Post that holds the wiki text of the tag.
+```{r}
+str(Bitcoin_Tags)
+```
+
+### Bitcoin Users
+#### Id: Primary key and User Id.
+#### Reputation: When other users vote(UpVote-positive or DownVote-negative) on your posts(Q&A), you generate reputation. The amount of points depends on many factors, but roughly scaled it works like this: sum(UpVote)+sum(downVote)=Reputation
+#### CreationDate: User creation date.
+#### DisplayName: User nickname.
+#### LastAccessDate: When was she/he last logged in.
+#### WebsiteUrl: User's website.
+#### Location: User's place of residence. Usually in the form of City, State.
+#### AboutMe: What the user wrote about himself. Usually a few sentences.
+#### Views: Number of times the profile is viewed.
+#### UpVotes: UpVote moves content "up" to make it visible to more people.
+#### DownVotes: DownVote moves content "down" on the page so fewer people can see it.
+#### AccountId: User's Stack Exchange Network profile ID.
+#### ProfileImageUrl: URL of profile image.
+```{r}
+str(Bitcoin_Users)
+```
+
+### Bitcoin Votes
+#### Id: Primary key.
+#### PostId: Id of the post.
+#### VoteTypeId: Vote type:
+##### 1=AcceptedByOriginator
+##### 2=UpMod(AKA upvote)
+##### 3=DownMod(AKA downvote)
+##### 4=Offensive
+##### 5=Favorite(AKA bookmark; UserId will also be populated)
+##### 6=Close(effective 2013-06-25: Close votes are only stored in table: PostHistory)
+##### 7=Reopen
+##### 8=BountyStart(UserId and BountyAmount will also be populated)
+##### 9=BountyClose(BountyAmount will also be populated)
+##### 10=Deletion
+##### 11=Undeletion
+##### 12=Spam, 15=ModeratorReview(i.e., a moderator looking at a flagged post)
+##### 16=ApproveEditSuggestion
+#### CreationDate: Date of the vote. Date only-time data is purposefully removed to protect user privacy.
+#### UserId: Present only if VoteTypeId in (5,8); -1 if user is deleted.
+#### BountyAmount: Present only if VoteTypeId in (8,9).
+```{r}
+str(Bitcoin_Votes)
+```
+
+## Ethereum
+### Ethereum Badges
+#### Id: Badge ID.
+#### UserId: User ID.
+#### Name: Name of the Badge.
+#### Date: Date of when the achievement was achieved.
+#### Class: 1=Gold, 2=Silver and 3=Bronze.
+#### TagBased: True if badge is for a tag, otherwise it is a named badge.
+```{r}
+str(Ethereum_Badges)
+```
+
+### Ethereum Comments
+#### Id: Id of a specific comment.(It is unqiue for each comment)
+#### PostId: Id of a specific post.(Many comments can be for one post)
+#### Score: Upvote and Downvote for a specific comment.
+#### Text: Text of the comment.
+#### CreationDate: Date of the comment.
+#### UserId: Id of the author of the comment.
+#### ContentLicense: Content License.
+#### UserDisplayName: Display name of the user. UserDisplayName=NA means that the user has not changed their default username.
+```{r}
+str(Ethereum_Comments)
+```
+
+### Ethereum PostHistory
+#### Id: Primary key.
+#### PostHistoryTypeId:
+##### 1=Initial Title - initial title(questions only)
+##### 2=Initial Body - initial post raw body text
+##### 3=Initial Tags - initial list of tags(questions only)
+##### 4=Edit Title - modified title(questions only)
+##### 5=Edit Body - modified post body(raw markdown)
+##### 6=Edit Tags - modified list of tags(questions only)
+##### 7=Rollback Title - reverted title(questions only)
+##### 8=Rollback Body - reverted body(raw markdown)
+##### 9=Rollback Tags - reverted list of tags(questions only)
+##### 10=Post Closed - post voted to be closed
+##### 11=Post Reopened - post voted to be reopened
+##### 12=Post Deleted - post voted to be removed
+##### 13=Post Undeleted - post voted to be restored
+##### 14=Post Locked - post locked by moderator
+##### 15=Post Unlocked - post unlocked by moderator
+##### 16=Community Owned - post now community owned
+##### 17=Post Migrated - post migrated - now replaced by 35/36(away/here)
+##### 18=Question Merged - question merged with deleted question
+##### 19=Question Protected - question was protected by a moderator.
+##### 20=Question Unprotected - question was unprotected by a moderator.
+##### 21=Post Disassociated - OwnerUserId removed from post by admin
+##### 22=Question Unmerged - answers/votes restored to previously merged question
+##### 24=Suggested Edit Applied
+##### 25=Post Tweeted
+##### 31=Comment discussion moved to chat
+##### 33=Post notice added - comment contains foreign key to PostNotices
+##### 34=Post notice removed - comment contains foreign key to PostNotices
+##### 35=Post migrated away - replaces id 17
+##### 36=Post migrated here - replaces id 17
+##### 37=Post merge source
+##### 38=Post merge destination
+##### 50=Bumped by Community User
+##### 52=Question became hot network question(main) / Hot Meta question(meta)
+##### 53=Question removed from hot network/meta questions by a moderator
+#### PostId: Id of the post.
+#### RevisionGUID: At times more than one type of history record can be recorded by a single action. All of these will be grouped using the same RevisionGUID.
+#### CreationDate: Creation of the PostHistory.
+#### UserId: Id of the user.
+#### Text: Text of the Post History.
+#### ContentLicense: Content license.
+#### Comment: Comment of the post history.
+#### UserDisplayName: Display name of the user. UserDisplayName = NA means that the user has not changed their default username.
+```{r}
+str(Ethereum_PostHistory)
+```
+
+### Ethereum PostLinks
+#### Id: Primary key.
+#### CreationDate: When the link was created.
+#### PostId: Id of source post.
+#### RelatedPostId: Id of target/related post.
+#### LinkTypeId: type of link: 1=Linked(PostId contains a link to RelatedPostId), 3=Duplicate(PostId is a duplicate of RelatedPostId).
+```{r}
+str(Ethereum_PostLinks)
+```
+
+### Ethereum Posts
+#### Id: Post Id.
+#### PostTypeId:
+##### 1=Question
+##### 2=Answer
+##### 3=Wiki
+##### 4=TagWikiExcerpt
+##### 5=TagWiki
+##### 6=ModeratorNomination
+##### 7=WikiPlaceholder
+##### 8=PrivilegeWiki.
+#### AcceptedAnswerId: Accepted answer id(with a green tick). Only present if PostTypeId=1.
+#### CreationDate: Creation date of the post.
+#### Score: The score of the post. The number we see between the up and down arrows. It starts at 0. Then other users decide how to rate the post.
+#### ViewCount: Number of views of the post. Only present if PostTypeId=1.
+#### Body: Post content.
+#### OwnerUserId: Id of the user who wrote the post. Only present if user has not been deleted; always -1 for tag wiki entries, for example the community user owns them.
+#### LastEditorDisplayName: Name of the last editor.
+#### LastEditDate: Date of the last edit.
+#### LastActivityDate: Date of the last activity.
+#### Title: Content of the title.
+#### Tags: Post tags. Only present if PostTypeId=1.
+#### AnswerCount: Number of replies to a post/reply.
+#### CommentCount: Number of comments to the post.
+#### FavoriteCount: Number of favorites
+#### ClosedDate: Closing date of the post
+#### CommunityOwnedDate: Present only if post is community wiki'd.
+#### ContentLicense: Content license.
+#### ParentId: The id of the question to which the answer was written. Only present if PostTypeId=2.
+#### LastEditorUserId: User Id of the last editor.
+#### OwnerDisplayName: Name of the post owner.
+```{r}
+str(Ethereum_Posts)
+```
+
+### Ethereum Tags
+#### Id: Primary key.
+#### TagName: Tag name. Just a one-word word used as a tag. For example: "path-finding", "tutorials",...
+#### Count: Number of uses of a given tag in all posts.
+#### ExcerptPostId: Id of Post that holds the excerpt text of the tag.
+#### WikiPostId: Id of Post that holds the wiki text of the tag.
+```{r}
+str(Ethereum_Tags)
+```
+
+### Ethereum Users
+#### Id: Primary key and User Id.
+#### Reputation: When other users vote(UpVote-positive or DownVote-negative) on your posts(Q&A), you generate reputation. The amount of points depends on many factors, but roughly scaled it works like this: sum(UpVote)+sum(downVote)=Reputation
+#### CreationDate: User creation date.
+#### DisplayName: User nickname.
+#### LastAccessDate: When was she/he last logged in.
+#### WebsiteUrl: User's website.
+#### Location: User's place of residence. Usually in the form of City, State.
+#### AboutMe: What the user wrote about himself. Usually a few sentences.
+#### Views: Number of times the profile is viewed.
+#### UpVotes: UpVote moves content "up" to make it visible to more people.
+#### DownVotes: DownVote moves content "down" on the page so fewer people can see it.
+#### AccountId: User's Stack Exchange Network profile ID.
+#### ProfileImageUrl: URL of profile image.
+```{r}
+str(Ethereum_Users)
+```
+
+### Ethereum Votes
+#### Id: Primary key.
+#### PostId: Id of the post.
+#### VoteTypeId: Vote type:
+##### 1=AcceptedByOriginator
+##### 2=UpMod(AKA upvote)
+##### 3=DownMod(AKA downvote)
+##### 4=Offensive
+##### 5=Favorite(AKA bookmark; UserId will also be populated)
+##### 6=Close(effective 2013-06-25: Close votes are only stored in table: PostHistory)
+##### 7=Reopen
+##### 8=BountyStart(UserId and BountyAmount will also be populated)
+##### 9=BountyClose(BountyAmount will also be populated)
+##### 10=Deletion
+##### 11=Undeletion
+##### 12=Spam
+##### 15=ModeratorReview(i.e., a moderator looking at a flagged post)
+##### 16=ApproveEditSuggestion
+#### CreationDate: Date of the vote. Date only-time data is purposefully removed to protect user privacy.
+#### UserId: Present only if VoteTypeId in (5,8); -1 if user is deleted.
+#### BountyAmount: Present only if VoteTypeId in (8,9).
+```{r}
+str(Ethereum_Votes)
+```
+
+# Analysis of Part 2 and Part 3
+## Summary of "Gamedev"
+```{r}
+summary(Gamedev_Badges)
+summary(Gamedev_Comments)
+summary(Gamedev_PostHistory)
+summary(Gamedev_PostLinks)
+summary(Gamedev_Posts)
+summary(Gamedev_Tags)
+summary(Gamedev_Users)
+summary(Gamedev_Votes)
+```
+
+## Summary of "Bitcoin"
+```{r}
+summary(Bitcoin_Badges)
+summary(Bitcoin_Comments)
+summary(Bitcoin_PostHistory)
+summary(Bitcoin_PostLinks)
+summary(Bitcoin_Posts)
+summary(Bitcoin_Tags)
+summary(Bitcoin_Users)
+summary(Bitcoin_Votes)
+```
+
+## Summary of Ethereum
+```{r}
+summary(Ethereum_Badges)
+summary(Ethereum_Comments)
+summary(Ethereum_PostHistory)
+summary(Ethereum_PostLinks)
+summary(Ethereum_Posts)
+summary(Ethereum_Tags)
+summary(Ethereum_Users)
+summary(Ethereum_Votes)
+```
+
+# Analysis of Part 4
+## Top 10 Users of "Gamedev"
+```{r}
+head(Gamedev_Users[order(-Gamedev_Users$Reputation),],n=10)
+```
+
+## Top 10 Users of "Bitcoin"
+```{r}
+head(Bitcoin_Users[order(-Bitcoin_Users$Reputation),],n=10)
+```
+
+## Top 10 Users of "Ethereum"
+```{r}
+head(Ethereum_Users[order(-Ethereum_Users$Reputation),],n=10)
+```
+
+## Top 10 Most Answered Posts from "Gamedev"
+```{r}
+select(head(Gamedev_Posts[order(-Gamedev_Posts$AnswerCount),],n=10),Title,AnswerCount,CreationDate)
+```
+
+## Top 10 Most Answered Posts from "Bitcoin"
+```{r}
+select(head(Bitcoin_Posts[order(-Bitcoin_Posts$AnswerCount),],n=10),Title,AnswerCount,CreationDate)
+```
+
+## Top 10 Most Answered Posts from "Ethereum"
+```{r}
+select(head(Ethereum_Posts[order(-Ethereum_Posts$AnswerCount),],n=10),Title,AnswerCount,CreationDate)
+```
+
+## Number of users from Poland at "Gamedev"
+```{r}
+GamedevUsers <- Gamedev_Users %>%
+filter(grepl("Poland", Location) == TRUE)
+nrow(GamedevUsers)
+```
+
+## Number of users from Poland at "Bitcoin"
+```{r}
+BitcoinUsers <- Bitcoin_Users %>%
+filter(grepl("Poland", Location) == TRUE)
+nrow(BitcoinUsers)
+```
+
+## Number of users from Poland at "Ethereum"
+```{r}
+EthereumUsers <- Ethereum_Users %>%
+filter(grepl("Poland", Location) == TRUE)
+nrow(EthereumUsers)
+```
