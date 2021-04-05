@@ -12,14 +12,14 @@ We used three anonymized dump of all user-contributed content on the Stack Excha
 7. Users
 8. Votes
 
-## Notebook 1
+## Notebook 1(Individual Work)
 Prepared scripts / modules allows for automatic data loading (from any forum) based on the given path. Moreover, written code / functions prepare data for analysis, i.e., the variables containing dates are being transform into correct format and all missing values is being denoted as NA. It also prepares a short report containing explanatory analysis of chosen sets:
 1. Description of available variables
 2. Basic statistics concerning them
 3. Information about missing values
 4. etc.
 
-## Notebook 2
+## Notebook 2(Group Work)
 Purpose of this part is a data science challenge - which we create interesting questions and generate answers to them. We are interested in issues related to specific websites, but also comparisons between sites. The state of “today” and trends over time. Popular stuff and rarities. Differences and similarities.
 
 In this part:
